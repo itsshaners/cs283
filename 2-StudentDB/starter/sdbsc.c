@@ -75,13 +75,14 @@ int get_student(int fd, int id, student_t *s)
         return ERR_DB_FILE;
     }
 
-    if (read(fd, s, STUDENT_RECORD_SIZE) != STUDENT_RECORD_SIZE)
+    ssize_t bytes_read = read(fd, s, STUDENT_RECORD_SIZE);
+    if (bytes_read == -1)
     {
         printf(M_ERR_DB_READ);
         return ERR_DB_FILE;
     }
 
-    if (s->id == DELETED_STUDENT_ID)
+    if (bytes_read == 0 || s->id == DELETED_STUDENT_ID)
     {
         return SRCH_NOT_FOUND;
     }
@@ -116,10 +117,6 @@ int get_student(int fd, int id, student_t *s)
  */
 int add_student(int fd, int id, char *fname, char *lname, int gpa)
 {
-
-    printf("Debug: Adding student with ID=%d, fname=%s, lname=%s, gpa=%d\n", id, fname, lname, gpa);
-    
-    
     if (!validate_range(id, gpa))
     {
         printf(M_ERR_STD_RNG);
@@ -146,7 +143,8 @@ int add_student(int fd, int id, char *fname, char *lname, int gpa)
         return ERR_DB_FILE;
     }
 
-    if (write(fd, &new_student, STUDENT_RECORD_SIZE) != STUDENT_RECORD_SIZE)
+    ssize_t bytes_written = write(fd, &new_student, STUDENT_RECORD_SIZE);
+    if (bytes_written != STUDENT_RECORD_SIZE)
     {
         printf(M_ERR_DB_WRITE);
         return ERR_DB_FILE;
@@ -440,12 +438,13 @@ int compress_db(int fd)
  */
 int validate_range(int id, int gpa)
 {
-
-    if ((id < MIN_STD_ID) || (id > MAX_STD_ID))
+    if ((id < MIN_STD_ID) || (id > MAX_STD_ID)) {
         return EXIT_FAIL_ARGS;
+    }
 
-    if ((gpa < MIN_STD_GPA) || (gpa > MAX_STD_GPA))
+    if ((gpa < MIN_STD_GPA) || (gpa > MAX_STD_GPA)) {
         return EXIT_FAIL_ARGS;
+    }
 
     return NO_ERROR;
 }
